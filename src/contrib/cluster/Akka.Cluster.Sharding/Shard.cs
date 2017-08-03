@@ -74,7 +74,7 @@ namespace Akka.Cluster.Sharding
         }
 
         /// <summary>
-        /// When an remembering entries and the entity stops without issuing a <see cref="Shard.Passivate"/>, 
+        /// When an remembering entries and the entity stops without issuing a <see cref="Shard.Passivate"/>,
         /// we restart it after a back off using this message.
         /// </summary>
         [Serializable]
@@ -96,7 +96,7 @@ namespace Akka.Cluster.Sharding
         }
 
         /// <summary>
-        /// When initialising a shard with remember entities enabled the following message is used to restart 
+        /// When initialising a shard with remember entities enabled the following message is used to restart
         /// batches of entity actors at a time.
         /// </summary>
         [Serializable]
@@ -120,7 +120,7 @@ namespace Akka.Cluster.Sharding
         /// <summary>
         /// TBD
         /// </summary>
-        protected internal abstract class StateChange
+        public abstract class StateChange: IClusterShardingSerializable
         {
             /// <summary>
             /// TBD
@@ -165,7 +165,7 @@ namespace Akka.Cluster.Sharding
         /// <see cref="ShardState"/> change for starting an entity in this `Shard`
         /// </summary>
         [Serializable]
-        protected internal sealed class EntityStarted : StateChange
+        public sealed class EntityStarted : StateChange
         {
             /// <summary>
             /// TBD
@@ -180,7 +180,7 @@ namespace Akka.Cluster.Sharding
         /// <see cref="ShardState"/> change for an entity which has terminated.
         /// </summary>
         [Serializable]
-        protected internal sealed class EntityStopped : StateChange
+        public sealed class EntityStopped : StateChange
         {
             /// <summary>
             /// TBD
@@ -310,7 +310,7 @@ namespace Akka.Cluster.Sharding
         /// Persistent state of the Shard.
         /// </summary>
         [Serializable]
-        protected internal class ShardState : IClusterShardingSerializable
+        public class ShardState : IClusterShardingSerializable
         {
             /// <summary>
             /// TBD
@@ -517,17 +517,13 @@ namespace Akka.Cluster.Sharding
         /// <param name="tref">TBD</param>
         protected virtual void EntityTerminated(IActorRef tref)
         {
-            ShardId id;
-            IImmutableList<Tuple<Msg, IActorRef>> buffer;
-            if (IdByRef.TryGetValue(tref, out id) && MessageBuffers.TryGetValue(id, out buffer) && buffer.Count != 0)
+            if (IdByRef.TryGetValue(tref, out var id) && MessageBuffers.TryGetValue(id, out var buffer) && buffer.Count != 0)
             {
                 Log.Debug("Starting entity [{0}] again, there are buffered messages for it", id);
                 SendMessageBuffer(new EntityStarted(id));
             }
             else
-            {
                 ProcessChange(new EntityStopped(id), PassivateCompleted);
-            }
 
             Passivating = Passivating.Remove(tref);
         }
@@ -603,8 +599,7 @@ namespace Akka.Cluster.Sharding
 
         private void Passivate(IActorRef entity, object stopMessage)
         {
-            ShardId id;
-            if (IdByRef.TryGetValue(entity, out id) && !MessageBuffers.ContainsKey(id))
+            if (IdByRef.TryGetValue(entity, out var id) && !MessageBuffers.ContainsKey(id))
             {
                 Log.Debug("Passivating started on entity {0}", id);
 
@@ -641,8 +636,8 @@ namespace Akka.Cluster.Sharding
             var id = message.EntityId;
 
             // Get the buffered messages and remove the buffer
-            IImmutableList<Tuple<Msg, IActorRef>> buffer;
-            if (MessageBuffers.TryGetValue(id, out buffer)) MessageBuffers = MessageBuffers.Remove(id);
+            if (MessageBuffers.TryGetValue(id, out var buffer))
+                MessageBuffers = MessageBuffers.Remove(id);
 
             if (buffer.Count != 0)
             {
@@ -670,8 +665,7 @@ namespace Akka.Cluster.Sharding
             }
             else
             {
-                IImmutableList<Tuple<Msg, IActorRef>> buffer;
-                if (MessageBuffers.TryGetValue(id, out buffer))
+                if (MessageBuffers.TryGetValue(id, out var buffer))
                 {
                     if (TotalBufferSize >= Settings.TunningParameters.BufferSize)
                     {

@@ -15,6 +15,7 @@ using Akka.Configuration;
 using Akka.Dispatch;
 using Akka.Dispatch.SysMsg;
 using Akka.Event;
+using System.Reflection;
 using Akka.Serialization;
 using Akka.Util;
 
@@ -279,7 +280,7 @@ namespace Akka.Actor.Internal
             foreach(var extensionFqn in _settings.Config.GetStringList("akka.extensions"))
             {
                 var extensionType = Type.GetType(extensionFqn);
-                if(extensionType == null || !typeof(IExtensionId).IsAssignableFrom(extensionType) || extensionType.IsAbstract || !extensionType.IsClass)
+                if(extensionType == null || !typeof(IExtensionId).IsAssignableFrom(extensionType) || extensionType.GetTypeInfo().IsAbstract || !extensionType.GetTypeInfo().IsClass)
                 {
                     _log.Error("[{0}] is not an 'ExtensionId', skipping...", extensionFqn);
                     continue;
@@ -342,8 +343,7 @@ namespace Akka.Actor.Internal
         /// <returns><c>true</c> if the retrieval was successful; otherwise <c>false</c>.</returns>
         public override bool TryGetExtension(Type extensionType, out object extension)
         {
-            Lazy<object> lazyExtension;
-            var wasFound = _extensions.TryGetValue(extensionType, out lazyExtension);
+            var wasFound = _extensions.TryGetValue(extensionType, out var lazyExtension);
             extension = wasFound ? lazyExtension.Value : null;
             return wasFound;
         }
@@ -356,8 +356,7 @@ namespace Akka.Actor.Internal
         /// <returns><c>true</c> if the retrieval was successful; otherwise <c>false</c>.</returns>
         public override bool TryGetExtension<T>(out T extension)
         {
-            Lazy<object> lazyExtension;
-            var wasFound = _extensions.TryGetValue(typeof(T), out lazyExtension);
+            var wasFound = _extensions.TryGetValue(typeof(T), out var lazyExtension);
             extension = wasFound ? lazyExtension.Value as T : null;
             return wasFound;
         }

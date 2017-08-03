@@ -209,12 +209,12 @@ namespace Akka.Actor
     }
 
     /// <summary>
-    /// TBD
+    /// Utility class for working with built-in actor references
     /// </summary>
     public static class ActorRefs
     {
         /// <summary>
-        /// TBD
+        /// Use this value to represent a non-existent actor.
         /// </summary>
         public static readonly Nobody Nobody = Nobody.Instance;
         /// <summary>
@@ -225,7 +225,7 @@ namespace Akka.Actor
     }
 
     /// <summary>
-    /// TBD
+    /// Base implementation for <see cref="IActorRef"/> implementations.
     /// </summary>
     public abstract class ActorRefBase : IActorRef
     {
@@ -764,8 +764,7 @@ override def getChild(name: Iterator[String]): InternalActorRef = {
             var firstName = enumerator.Current;
             if (string.IsNullOrEmpty(firstName))
                 return this;
-            IInternalActorRef child;
-            if (_children.TryGetValue(firstName, out child))
+            if (_children.TryGetValue(firstName, out var child))
                 return child.GetChild(new Enumerable<string>(enumerator));
             return ActorRefs.Nobody;
         }
